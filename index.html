@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2.4G 还是 5G？</title>
+<style>
+  :root{
+    --ink:#2d3142;
+    --card:#ffffff;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    min-height:100vh;
+    background-color:#fffdf6;
+    background-image:
+      radial-gradient(circle at 12% 6%,  rgba(255,214,102,.35) 0%, transparent 38%),
+      radial-gradient(circle at 88% 92%, rgba(77,171,247,.22) 0%, transparent 38%),
+      radial-gradient(circle at 85% 8%,  rgba(155,126,222,.18) 0%, transparent 32%),
+      radial-gradient(#eae5d8 1.6px, transparent 1.6px);
+    background-size:100% 100%, 100% 100%, 100% 100%, 26px 26px;
+    color:var(--ink);
+    font-family:"Comic Sans MS","Chalkboard SE","华文楷体","KaiTi","楷体","Microsoft YaHei",sans-serif;
+    padding:26px 16px 70px;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1000px;margin:0 auto;}
+
+  header{text-align:center;margin-bottom:24px;}
+  header h1{
+    margin:0 0 10px;
+    font-size:clamp(21px,3.6vw,32px);
+    letter-spacing:1.5px;
+    color:var(--ink);
+    font-weight:800;
+    text-shadow:3px 3px 0 #ffe28a, 6px 6px 0 rgba(45,49,66,.10);
+  }
+  header p{margin:0;font-size:14.5px;color:#7c8398;letter-spacing:.5px;}
+
+  .card{
+    background:var(--card);
+    border:3px solid var(--ink);
+    border-radius:24px;
+    padding:20px;
+    margin-bottom:28px;
+    box-shadow:7px 7px 0 rgba(45,49,66,.13);
+  }
+  .card h2{
+    text-align:center;font-size:20px;margin:0 0 4px;color:var(--ink);
+    letter-spacing:1px;
+  }
+  .card h2 .hl{
+    background:linear-gradient(transparent 58%, #ffe28a 58%);
+    padding:0 3px;
+  }
+  .sub-title{
+    text-align:center;color:#98a0b3;font-size:13.5px;margin:0 0 16px;letter-spacing:.4px;
+  }
+
+  /* ============ 频段挪移 ============ */
+  .band-wrap{
+    display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:10px;
+  }
+  .band{
+    border:3px solid var(--ink);border-radius:18px;padding:14px;
+    background:#fbfcff;min-height:300px;
+  }
+  .band-title{
+    text-align:center;font-size:18px;font-weight:800;padding:8px;
+    border-radius:12px;margin-bottom:10px;
+  }
+  .band-24 .band-title{background:#ffe066;}
+  .band-5 .band-title{background:#74c0fc;}
+  .band-desc{font-size:13.5px;color:#6c7a93;text-align:center;margin-bottom:10px;line-height:1.6;}
+  .device-pool{
+    grid-column:1/-1;
+    display:flex;flex-wrap:wrap;gap:10px;justify-content:center;
+    padding:14px;border:2.5px dashed #cfd6e4;border-radius:14px;background:#fff;
+  }
+  .device{
+    cursor:grab;border:2.5px solid var(--ink);background:#fff;
+    padding:8px 12px;border-radius:12px;font-size:14px;font-weight:700;
+    box-shadow:3px 3px 0 rgba(45,49,66,.16);user-select:none;
+  }
+  .device.placed{opacity:.35;cursor:default;}
+  .band .items{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;min-height:60px;}
+  .band.hover{background:#fff9db;}
+
+  .match-status{
+    text-align:center;margin-top:12px;font-size:15px;font-weight:700;
+    min-height:24px;color:#8a93a8;
+  }
+  .match-status.ok{color:#12a150;font-size:17px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>📶 第二关：2.4G 还是 5G？</h1>
+    <p>把教室的设备拖到合适的 Wi-Fi 频段车道上</p>
+  </header>
+
+  <section class="card">
+    <h2>📶 <span class="hl">2.4G 还是 5G？</span></h2>
+    <p class="sub-title">把教室的设备拖到合适的 Wi-Fi 频段车道上</p>
+
+    <div class="band-wrap">
+      <div class="band band-24" data-band="24">
+        <div class="band-title">2.4 GHz 车道</div>
+        <div class="band-desc">穿墙强、速度慢<br>老设备、智能家居都爱它</div>
+        <div class="items"></div>
+      </div>
+      <div class="band band-5" data-band="5">
+        <div class="band-title">5 GHz 车道</div>
+        <div class="band-desc">穿墙弱、速度快<br>手机、平板刷视频首选</div>
+        <div class="items"></div>
+      </div>
+      <div class="device-pool" id="devicePool">
+      </div>
+    </div>
+    <div class="match-status" id="bandStatus">拖一拖，把设备分到合适的车道～</div>
+  </section>
+
+</div>
+
+<script>
+/* ============ 卡片2：频段挪移 ============ */
+const DEVICES = [
+  {text:'📱 小明的手机', band:'5'},
+  {text:'📟 平板上网课', band:'5'},
+  {text:'🔊 智能音箱（听音乐）', band:'24'},
+  {text:'📷 教室门口监控', band:'24'},
+  {text:'⌚ 智能手环', band:'24'},
+];
+const devPool = document.getElementById('devicePool');
+DEVICES.forEach((d, i) => {
+  const el = document.createElement('div');
+  el.className = 'device';
+  el.draggable = true;
+  el.textContent = d.text;
+  el.dataset.band = d.band;
+  el.dataset.idx = i;
+  devPool.appendChild(el);
+  el.addEventListener('dragstart', e => e.dataTransfer.setData('text/plain', 'd'+i));
+});
+
+document.querySelectorAll('.band').forEach(bk => {
+  bk.addEventListener('dragover', e => { e.preventDefault(); bk.classList.add('hover'); });
+  bk.addEventListener('dragleave', () => bk.classList.remove('hover'));
+  bk.addEventListener('drop', e => {
+    e.preventDefault(); bk.classList.remove('hover');
+    const idx = parseInt(e.dataTransfer.getData('text/plain').slice(1));
+    const d = DEVICES[idx];
+    const dragged = document.querySelector(`.device[data-idx="${idx}"]`);
+    if (!dragged || dragged.classList.contains('placed')) return;
+    if (bk.dataset.band === d.band) {
+      bk.querySelector('.items').appendChild(dragged);
+      dragged.classList.add('placed');
+      checkBand();
+    } else {
+      bk.style.background = '#ffe3e3';
+      setTimeout(() => bk.style.background = '', 400);
+    }
+  });
+});
+
+function checkBand(){
+  const placed = document.querySelectorAll('.device.placed').length;
+  const st = document.getElementById('bandStatus');
+  if (placed === DEVICES.length) {
+    st.textContent = '🎉 全部正确！手机平板走5G冲速度，音箱监控手环走2.4G求稳定';
+    st.classList.add('ok');
+  } else {
+    st.textContent = `已放置 ${placed} / ${DEVICES.length}，继续～`;
+    st.classList.remove('ok');
+  }
+}
+</script>
+</body>
+</html>
